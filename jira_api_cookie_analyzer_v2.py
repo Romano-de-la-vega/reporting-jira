@@ -1520,6 +1520,15 @@ del {{ background:#fee2e2; color:#991b1b; text-decoration:line-through; border-r
   .report-change-title {{ font-size:9pt; font-weight:850; color:var(--dark); }}
   .report-change-meta {{ color:#64748b; font-size:7.5pt; white-space:nowrap; }}
   .report-change-type {{ margin-bottom:2.5mm; color:#475569; font-size:8pt; }}
+  .report-precise-head {{ display:flex; align-items:center; justify-content:space-between; gap:3mm; margin:0 0 1.5mm; }}
+  .report-precise-title {{ color:#334155; font-size:7.2pt; font-weight:850; letter-spacing:.04em; text-transform:uppercase; }}
+  .report-diff-legend {{ display:flex; gap:1.5mm; color:#64748b; font-size:6.5pt; }}
+  .report-diff-key {{ padding:1mm 1.8mm; border-radius:99px; font-weight:750; }}
+  .report-diff-key.deleted {{ background:#fee2e2; color:#991b1b; text-decoration:line-through; }}
+  .report-diff-key.added {{ background:#dcfce7; color:#166534; }}
+  .report-precise-diff {{ margin-bottom:3mm; padding:3mm; border:1px solid #cbd5e1; border-radius:2mm; background:#f8fafc; color:#475569; font-size:7.5pt; line-height:1.55; white-space:pre-wrap; overflow-wrap:anywhere; }}
+  .report-precise-diff del {{ padding:.3mm .6mm; background:#fee2e2; color:#991b1b; text-decoration:line-through; font-weight:800; }}
+  .report-precise-diff ins {{ padding:.3mm .6mm; background:#dcfce7; color:#166534; text-decoration:none; font-weight:800; }}
   .report-before-after {{ display:grid; grid-template-columns:1fr 1fr; gap:3mm; }}
   .report-value {{ min-height:13mm; padding:3mm; border-radius:2mm; font-size:7.2pt; line-height:1.4; white-space:pre-wrap; overflow-wrap:anywhere; }}
   .report-value.before {{ background:#fff1f2; border:1px solid #fecdd3; }}
@@ -1849,8 +1858,10 @@ function reportChangeColor(e) {{
   return {{desc:'#10B981',ac:'#F59E0B',status:'#0F766E',assign:'#EF4444',comment:'#64748B'}}[eventClass(e)]||'#1F4E78';
 }}
 function changeDetailHtml(e) {{
-  const before=truncateReportText(e.from_value||e.from_excerpt||'',520),after=truncateReportText(e.to_value||e.to_excerpt||'',520);
-  return `<article class="report-change" style="--change-color:${{reportChangeColor(e)}}"><div class="report-change-head"><div class="report-change-title">${{escapeHtml(e.key)}} · ${{escapeHtml(e.field||'Action')}}</div><div class="report-change-meta">${{escapeHtml(formatDate(e.event_date))}}</div></div><div class="report-change-type">${{escapeHtml(e.change_type||'Modification')}} · par <b>${{escapeHtml(e.author||'Non renseigné')}}</b></div><div class="report-before-after"><div class="report-value before"><b>Avant</b>${{escapeHtml(before||'—')}}</div><div class="report-value after"><b>Après</b>${{escapeHtml(after||'—')}}</div></div></article>`;
+  const rawBefore=e.from_value||e.from_excerpt||'',rawAfter=e.to_value||e.to_excerpt||'';
+  const before=truncateReportText(rawBefore,520),after=truncateReportText(rawAfter,520);
+  const exactDiff=`<div class="report-precise-head"><div class="report-precise-title">Diff précis</div><div class="report-diff-legend"><span class="report-diff-key deleted">Supprimé</span><span class="report-diff-key added">Ajouté</span></div></div><div class="report-precise-diff">${{preciseDiff(rawBefore,rawAfter)}}</div>`;
+  return `<article class="report-change" style="--change-color:${{reportChangeColor(e)}}"><div class="report-change-head"><div class="report-change-title">${{escapeHtml(e.key)}} · ${{escapeHtml(e.field||'Action')}}</div><div class="report-change-meta">${{escapeHtml(formatDate(e.event_date))}}</div></div><div class="report-change-type">${{escapeHtml(e.change_type||'Modification')}} · par <b>${{escapeHtml(e.author||'Non renseigné')}}</b></div>${{exactDiff}}<div class="report-before-after"><div class="report-value before"><b>Avant</b>${{escapeHtml(before||'—')}}</div><div class="report-value after"><b>Après</b>${{escapeHtml(after||'—')}}</div></div></article>`;
 }}
 function detailsHtml(es) {{
   const order=document.getElementById('reportDetailOrder').value;
