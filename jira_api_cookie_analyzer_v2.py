@@ -1389,6 +1389,17 @@ header p {{ margin:6px 0 0 0; opacity:.85; }}
 .filters {{ display:grid; grid-template-columns: repeat(8, minmax(135px,1fr)); gap:12px; background:white; padding:16px; border-radius:14px; box-shadow:0 1px 5px rgba(15,23,42,.10); position:sticky; top:0; z-index:5; }}
 label {{ font-size:12px; font-weight:700; color:#374151; display:block; margin-bottom:4px; }}
 select,input {{ width:100%; padding:9px; border:1px solid #cbd5e1; border-radius:8px; background:white; }}
+.multi-filter {{ position:relative; }}
+.multi-toggle {{ width:100%; min-height:37px; padding:9px 30px 9px 10px; border:1px solid #cbd5e1; border-radius:8px; background:white; color:#111827; text-align:left; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; position:relative; }}
+.multi-toggle:after {{ content:"▾"; position:absolute; right:10px; color:#64748b; }}
+.multi-filter.open .multi-toggle {{ border-color:var(--primary); box-shadow:0 0 0 2px #dbeafe; }}
+.multi-options {{ display:none; position:absolute; top:calc(100% + 4px); left:0; min-width:100%; width:max-content; max-width:320px; max-height:280px; overflow:auto; padding:7px; background:white; border:1px solid #cbd5e1; border-radius:9px; box-shadow:0 10px 24px rgba(15,23,42,.18); z-index:30; }}
+.multi-filter.open .multi-options {{ display:block; }}
+.multi-reset {{ width:100%; padding:6px 8px; margin-bottom:5px; border:0; border-radius:6px; background:#eef6ff; color:var(--primary); font-weight:700; text-align:left; cursor:pointer; }}
+.multi-option {{ display:flex; align-items:flex-start; gap:7px; min-width:180px; padding:6px 7px; margin:0; border-radius:6px; font-size:12px; font-weight:500; color:#1f2937; cursor:pointer; }}
+.multi-option:hover {{ background:#f1f5f9; }}
+.multi-option input {{ width:auto; margin:2px 0 0; padding:0; flex:0 0 auto; }}
+.multi-empty {{ padding:7px; color:#64748b; font-size:12px; }}
 .cards {{ display:grid; grid-template-columns: repeat(8, 1fr); gap:14px; margin:18px 0; }}
 .card {{ background:white; border-left:6px solid var(--primary); border-radius:14px; padding:14px; box-shadow:0 1px 5px rgba(15,23,42,.10); }}
 .card .label {{ font-size:12px; color:#64748b; font-weight:700; }}
@@ -1437,11 +1448,11 @@ del {{ background:#fee2e2; color:#991b1b; text-decoration:line-through; border-r
   <div class="filters">
     <div><label>Date début</label><input type="date" id="dateStart"/></div>
     <div><label>Date fin</label><input type="date" id="dateEnd"/></div>
-    <div><label>Type</label><select id="typeFilter"></select></div>
-    <div><label>Sprint</label><select id="sprintFilter"></select></div>
-    <div><label>Statut actuel</label><select id="statusFilter"></select></div>
-    <div><label>Champ modifié</label><select id="fieldFilter"></select></div>
-    <div><label>Ticket</label><select id="ticketFilter"></select></div>
+    <div><label>Type</label><div class="multi-filter" id="typeFilter"></div></div>
+    <div><label>Sprint</label><div class="multi-filter" id="sprintFilter"></div></div>
+    <div><label>Statut actuel</label><div class="multi-filter" id="statusFilter"></div></div>
+    <div><label>Champ modifié</label><div class="multi-filter" id="fieldFilter"></div></div>
+    <div><label>Ticket</label><div class="multi-filter" id="ticketFilter"></div></div>
     <div><label>Recherche</label><input id="searchBox" placeholder="PPMG, texte, auteur..."/></div>
   </div>
   <div class="cards" id="cards"></div>
@@ -1458,15 +1469,60 @@ del {{ background:#fee2e2; color:#991b1b; text-decoration:line-through; border-r
 const DATA = {data_json};
 const issues = DATA.issues;
 const events = DATA.events;
-const state = {{ type:'Tous', sprint:'Tous', status:'Tous', field:'Tous', ticket:'Tous', q:'', start:'', end:'' }};
-function uniq(arr) {{ return ['Tous', ...Array.from(new Set(arr.filter(x => x && String(x).trim()))).sort((a,b)=>String(a).localeCompare(String(b)))] }}
-function fillSelect(id, values) {{ const el=document.getElementById(id); el.innerHTML=''; values.forEach(v=>{{ const o=document.createElement('option'); o.value=v; o.textContent=v; el.appendChild(o); }}); el.onchange=()=>{{ const key=id.replace('Filter',''); state[key]=el.value; render(); }} }}
+const state = {{ type:new Set(), sprint:new Set(), status:new Set(), field:new Set(), ticket:new Set(), q:'', start:'', end:'' }};
+function uniq(arr) {{ return Array.from(new Set(arr.filter(x => x && String(x).trim()))).sort((a,b)=>String(a).localeCompare(String(b))) }}
+function multiLabel(key) {{
+  const selected = state[key];
+  if(!selected.size) return 'Tous';
+  if(selected.size === 1) return selected.values().next().value;
+  return `${{selected.size}} sélectionnés`;
+}}
+function syncMultiSelect(id) {{
+  const el=document.getElementById(id), key=id.replace('Filter','');
+  el.querySelector('.multi-toggle').textContent=multiLabel(key);
+  el.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=state[key].has(cb.value));
+}}
+function fillMultiSelect(id, values) {{
+  const el=document.getElementById(id), key=id.replace('Filter','');
+  const toggle=document.createElement('button');
+  toggle.type='button'; toggle.className='multi-toggle';
+  toggle.setAttribute('aria-haspopup','true'); toggle.setAttribute('aria-expanded','false');
+  const options=document.createElement('div'); options.className='multi-options';
+  const reset=document.createElement('button');
+  reset.type='button'; reset.className='multi-reset'; reset.textContent='Afficher tous';
+  reset.onclick=e=>{{ e.stopPropagation(); state[key].clear(); syncMultiSelect(id); render(); }};
+  options.appendChild(reset);
+  if(!values.length) {{
+    const empty=document.createElement('div'); empty.className='multi-empty'; empty.textContent='Aucune valeur'; options.appendChild(empty);
+  }} else {{
+    values.forEach(v=>{{
+      const label=document.createElement('label'); label.className='multi-option';
+      const cb=document.createElement('input'); cb.type='checkbox'; cb.value=v;
+      const text=document.createElement('span'); text.textContent=v;
+      cb.onchange=()=>{{ cb.checked ? state[key].add(v) : state[key].delete(v); syncMultiSelect(id); render(); }};
+      label.append(cb,text); options.appendChild(label);
+    }});
+  }}
+  toggle.onclick=e=>{{
+    e.stopPropagation();
+    document.querySelectorAll('.multi-filter.open').forEach(other=>{{ if(other!==el) {{ other.classList.remove('open'); other.querySelector('.multi-toggle').setAttribute('aria-expanded','false'); }} }});
+    el.classList.toggle('open'); toggle.setAttribute('aria-expanded',String(el.classList.contains('open')));
+  }};
+  options.onclick=e=>e.stopPropagation();
+  el.replaceChildren(toggle,options); syncMultiSelect(id);
+}}
+function toggleMultiValue(id, value) {{
+  const key=id.replace('Filter','');
+  state[key].has(value) ? state[key].delete(value) : state[key].add(value);
+  syncMultiSelect(id); render();
+}}
 function init() {{
-  fillSelect('typeFilter', uniq(issues.map(i=>i.issue_type)));
-  fillSelect('sprintFilter', uniq(issues.flatMap(i=>String(i.sprint_names||'').split('; ').filter(Boolean))));
-  fillSelect('statusFilter', uniq(issues.map(i=>i.status)));
-  fillSelect('fieldFilter', uniq(events.map(e=>e.field)));
-  fillSelect('ticketFilter', uniq(issues.map(i=>i.key)));
+  fillMultiSelect('typeFilter', uniq(issues.map(i=>i.issue_type)));
+  fillMultiSelect('sprintFilter', uniq(issues.flatMap(i=>String(i.sprint_names||'').split('; ').filter(Boolean))));
+  fillMultiSelect('statusFilter', uniq(issues.map(i=>i.status)));
+  fillMultiSelect('fieldFilter', uniq(events.map(e=>e.field)));
+  fillMultiSelect('ticketFilter', uniq(issues.map(i=>i.key)));
+  document.addEventListener('click',()=>document.querySelectorAll('.multi-filter.open').forEach(el=>{{ el.classList.remove('open'); el.querySelector('.multi-toggle').setAttribute('aria-expanded','false'); }}));
   document.getElementById('searchBox').oninput = e => {{ state.q=e.target.value.toLowerCase(); render(); }};
   document.getElementById('dateStart').onchange = e => {{ state.start=e.target.value; render(); }};
   document.getElementById('dateEnd').onchange = e => {{ state.end=e.target.value; render(); }};
@@ -1488,10 +1544,10 @@ function datePass(s) {{
   return true;
 }}
 function issuePass(i) {{
-  if(state.type !== 'Tous' && i.issue_type !== state.type) return false;
-  if(state.sprint !== 'Tous' && !String(i.sprint_names||'').split('; ').includes(state.sprint)) return false;
-  if(state.status !== 'Tous' && i.status !== state.status) return false;
-  if(state.ticket !== 'Tous' && i.key !== state.ticket) return false;
+  if(state.type.size && !state.type.has(i.issue_type)) return false;
+  if(state.sprint.size && !String(i.sprint_names||'').split('; ').some(s=>state.sprint.has(s))) return false;
+  if(state.status.size && !state.status.has(i.status)) return false;
+  if(state.ticket.size && !state.ticket.has(i.key)) return false;
   const q = state.q;
   if(q && !(String(i.key+' '+i.summary+' '+i.assignee+' '+i.sprint_names).toLowerCase().includes(q))) return false;
   return true;
@@ -1499,7 +1555,7 @@ function issuePass(i) {{
 function eventPass(e, issueSet) {{
   if(!issueSet.has(e.issue_id)) return false;
   if(!datePass(e.event_date)) return false;
-  if(state.field !== 'Tous' && e.field !== state.field) return false;
+  if(state.field.size && !state.field.has(e.field)) return false;
   const q = state.q;
   if(q && !(String(e.key+' '+e.summary+' '+e.author+' '+e.field+' '+e.from_excerpt+' '+e.to_excerpt+' '+e.from_value+' '+e.to_value).toLowerCase().includes(q))) return false;
   return true;
@@ -1537,7 +1593,8 @@ function renderFields(es) {{
 function renderTickets(is, es) {{
   const counts = new Map(); es.forEach(e=>counts.set(e.issue_id,(counts.get(e.issue_id)||0)+1));
   const sorted = [...is].sort((a,b)=>(counts.get(b.issue_id)||0)-(counts.get(a.issue_id)||0));
-  document.getElementById('ticketList').innerHTML = sorted.slice(0,200).map(i=>`<div class="ticket ${{state.ticket===i.key?'active':''}}" onclick="state.ticket='${{i.key}}'; document.getElementById('ticketFilter').value='${{i.key}}'; render();"><span class="key">${{i.key}}</span> <span class="badge">${{i.issue_type}}</span><div>${{escapeHtml(i.summary||'')}}</div><div class="meta">${{i.status||''}} · ${{i.assignee||''}} · ${{i.sprint_names||''}} · ${{counts.get(i.issue_id)||0}} event(s)</div></div>`).join('');
+  document.getElementById('ticketList').innerHTML = sorted.slice(0,200).map(i=>`<div class="ticket ${{state.ticket.has(i.key)?'active':''}}" data-ticket-key="${{escapeHtml(i.key)}}"><span class="key">${{escapeHtml(i.key)}}</span> <span class="badge">${{escapeHtml(i.issue_type)}}</span><div>${{escapeHtml(i.summary||'')}}</div><div class="meta">${{escapeHtml(i.status||'')}} · ${{escapeHtml(i.assignee||'')}} · ${{escapeHtml(i.sprint_names||'')}} · ${{counts.get(i.issue_id)||0}} event(s)</div></div>`).join('');
+  document.querySelectorAll('#ticketList .ticket').forEach(el=>el.onclick=()=>toggleMultiValue('ticketFilter',el.dataset.ticketKey));
 }}
 function eventClass(e) {{ if(e.field==='Description') return 'desc'; if(e.field==='Acceptance Criteria') return 'ac'; if(e.field==='Statut') return 'status'; if(e.field==='Assignation') return 'assign'; if(e.field==='Commentaire') return 'comment'; return ''; }}
 function renderTimeline(is, es) {{
