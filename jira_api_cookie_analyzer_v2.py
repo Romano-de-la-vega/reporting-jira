@@ -1383,8 +1383,12 @@ def write_html(path: Path, issues: List[IssueRow], events: List[TimelineEvent], 
 * {{ box-sizing: border-box; }}
 body {{ margin:0; font-family: Segoe UI, Arial, sans-serif; background:#f7f9fc; color:#111827; }}
 header {{ background:var(--dark); color:white; padding:22px 32px; }}
+.header-inner {{ display:flex; align-items:center; justify-content:space-between; gap:24px; max-width:1800px; margin:0 auto; }}
 header h1 {{ margin:0; font-size:24px; }}
 header p {{ margin:6px 0 0 0; opacity:.85; }}
+.export-button {{ display:inline-flex; align-items:center; gap:9px; border:1px solid rgba(255,255,255,.24); border-radius:10px; padding:10px 15px; color:white; background:linear-gradient(135deg,var(--primary),var(--teal)); font:inherit; font-size:13px; font-weight:800; white-space:nowrap; cursor:pointer; box-shadow:0 8px 22px rgba(0,0,0,.18); }}
+.export-button:hover {{ transform:translateY(-1px); filter:brightness(1.08); }}
+.export-button svg {{ width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:2; }}
 .container {{ padding:22px 32px; }}
 .filters {{ display:grid; grid-template-columns: repeat(8, minmax(135px,1fr)); gap:12px; background:white; padding:16px; border-radius:14px; box-shadow:0 1px 5px rgba(15,23,42,.10); position:sticky; top:0; z-index:5; }}
 label {{ font-size:12px; font-weight:700; color:#374151; display:block; margin-bottom:4px; }}
@@ -1439,11 +1443,125 @@ del {{ background:#fee2e2; color:#991b1b; text-decoration:line-through; border-r
 .bar {{ display:grid; grid-template-columns: 170px 1fr 50px; gap:8px; align-items:center; margin:6px 0; font-size:12px; }}
 .bar span:nth-child(2) {{ height:12px; background:linear-gradient(90deg,var(--primary),var(--teal)); border-radius:999px; }}
 .small-note {{ color:#64748b; font-size:12px; margin-top:8px; }}
+.export-dialog {{ width:min(720px,calc(100vw - 32px)); padding:0; border:0; border-radius:18px; color:#111827; box-shadow:0 28px 70px rgba(15,23,42,.28); }}
+.export-dialog::backdrop {{ background:rgba(15,23,42,.62); backdrop-filter:blur(3px); }}
+.export-dialog-head {{ padding:22px 24px 16px; background:linear-gradient(135deg,var(--dark),var(--primary)); color:white; }}
+.export-dialog-head h2 {{ margin:0; font-size:21px; }}
+.export-dialog-head p {{ margin:7px 0 0; color:rgba(255,255,255,.8); font-size:13px; line-height:1.45; }}
+.export-dialog-body {{ padding:20px 24px; }}
+.export-scope {{ display:flex; gap:10px; align-items:center; margin-bottom:17px; padding:11px 13px; border:1px solid #bfdbfe; border-radius:10px; background:#eff6ff; color:#1e3a8a; font-size:13px; }}
+.export-scope strong {{ font-size:16px; }}
+.export-label {{ margin:0 0 6px; font-size:12px; font-weight:800; color:#334155; }}
+.export-title-input {{ width:100%; margin-bottom:17px; }}
+.export-options {{ display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-bottom:17px; }}
+.export-option {{ display:flex; gap:10px; align-items:flex-start; padding:11px; border:1px solid #e2e8f0; border-radius:10px; cursor:pointer; font-size:13px; font-weight:700; }}
+.export-option:hover {{ background:#f8fafc; border-color:#93c5fd; }}
+.export-option input {{ width:auto; margin:2px 0 0; accent-color:var(--primary); }}
+.export-option small {{ display:block; margin-top:3px; color:#64748b; font-weight:400; line-height:1.35; }}
+.export-row {{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }}
+.export-help {{ margin:15px 0 0; color:#64748b; font-size:12px; line-height:1.45; }}
+.export-actions {{ display:flex; justify-content:flex-end; gap:10px; padding:15px 24px; border-top:1px solid #e2e8f0; background:#f8fafc; }}
+.dialog-button {{ border:0; border-radius:9px; padding:10px 15px; font:inherit; font-size:13px; font-weight:800; cursor:pointer; }}
+.dialog-button.secondary {{ background:white; color:#475569; border:1px solid #cbd5e1; }}
+.dialog-button.primary {{ background:var(--primary); color:white; }}
+.print-report {{ display:none; }}
 @media(max-width:1200px) {{ .filters,.cards {{ grid-template-columns: repeat(2, 1fr); }} .grid,.global {{ grid-template-columns:1fr; }} }}
+@media(max-width:700px) {{ header {{ padding:18px; }} .header-inner {{ align-items:flex-start; }} .export-button span {{ display:none; }} .container {{ padding:16px; }} .export-options,.export-row {{ grid-template-columns:1fr; }} }}
+@page {{ size:A4; margin:12mm 11mm 15mm; }}
+@media print {{
+  html,body {{ width:210mm; background:white !important; color:#172033; font-family:"Segoe UI",Arial,sans-serif; print-color-adjust:exact; -webkit-print-color-adjust:exact; }}
+  body > header,body > .container,body > .export-dialog {{ display:none !important; }}
+  .print-report {{ display:block !important; width:100%; }}
+  .report-cover {{ min-height:253mm; display:flex; flex-direction:column; padding:12mm 10mm 9mm; color:white; background:linear-gradient(145deg,var(--dark) 0 62%,var(--primary) 62% 82%,var(--teal) 82%); break-after:page; }}
+  .report-brand {{ display:flex; justify-content:space-between; align-items:center; font-size:9pt; font-weight:700; letter-spacing:.08em; text-transform:uppercase; opacity:.85; }}
+  .report-cover-main {{ margin:auto 0; max-width:155mm; }}
+  .report-kicker {{ margin-bottom:6mm; color:#bfdbfe; font-size:11pt; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }}
+  .report-cover h1 {{ margin:0 0 7mm; font-size:31pt; line-height:1.08; color:white; }}
+  .report-cover-subtitle {{ margin:0; font-size:14pt; line-height:1.5; color:#e2e8f0; }}
+  .report-cover-meta {{ display:grid; grid-template-columns:repeat(3,1fr); gap:5mm; margin-top:15mm; }}
+  .report-cover-stat {{ padding:5mm; border:1px solid rgba(255,255,255,.25); border-radius:4mm; background:rgba(255,255,255,.10); }}
+  .report-cover-stat b {{ display:block; font-size:23pt; color:white; }}
+  .report-cover-stat span {{ font-size:9pt; color:#dbeafe; }}
+  .report-cover-foot {{ display:flex; justify-content:space-between; gap:8mm; font-size:8.5pt; color:#dbeafe; }}
+  .report-page {{ break-before:page; }}
+  .report-page:first-of-type {{ break-before:auto; }}
+  .report-section {{ margin:0 0 9mm; }}
+  .report-section h2 {{ margin:0 0 5mm; padding-bottom:3mm; border-bottom:1.5px solid #cbd5e1; color:var(--dark); font-size:18pt; }}
+  .report-section h3 {{ margin:0 0 3mm; color:#334155; font-size:11pt; }}
+  .report-section-intro {{ margin:-2mm 0 5mm; color:#64748b; font-size:9pt; line-height:1.5; }}
+  .report-filters {{ display:flex; flex-wrap:wrap; gap:2mm; margin:0 0 7mm; }}
+  .report-chip {{ padding:1.6mm 3mm; border-radius:999px; background:#eaf2f8; color:var(--primary); font-size:8pt; font-weight:700; }}
+  .report-kpis {{ display:grid; grid-template-columns:repeat(3,1fr); gap:4mm; }}
+  .report-kpi {{ position:relative; overflow:hidden; min-height:29mm; padding:5mm; border:1px solid #dbe4ef; border-radius:4mm; background:#fff; }}
+  .report-kpi:after {{ content:""; position:absolute; right:-8mm; bottom:-9mm; width:24mm; height:24mm; border-radius:50%; background:var(--kpi-color,#dbeafe); opacity:.22; }}
+  .report-kpi-label {{ color:#64748b; font-size:8pt; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }}
+  .report-kpi-value {{ margin-top:2mm; color:var(--dark); font-size:24pt; font-weight:850; line-height:1; }}
+  .report-kpi-note {{ margin-top:2mm; color:#64748b; font-size:7.5pt; }}
+  .report-highlight {{ margin:6mm 0; padding:5mm 6mm; border-left:4px solid var(--accent); border-radius:0 3mm 3mm 0; background:#fff7ed; color:#334155; font-size:10pt; line-height:1.55; }}
+  .report-two-cols {{ display:grid; grid-template-columns:1.35fr .9fr; gap:7mm; align-items:start; }}
+  .report-chart-card {{ padding:5mm; border:1px solid #dbe4ef; border-radius:4mm; background:#fff; break-inside:avoid; }}
+  .report-chart-card svg {{ display:block; width:100%; height:auto; overflow:visible; }}
+  .report-legend {{ display:grid; gap:2.2mm; margin-top:4mm; }}
+  .report-legend-row {{ display:grid; grid-template-columns:3mm 1fr auto; gap:2mm; align-items:center; font-size:8pt; }}
+  .report-legend-dot {{ width:3mm; height:3mm; border-radius:1mm; }}
+  .report-author {{ display:grid; grid-template-columns:35mm 1fr 9mm; gap:3mm; align-items:center; margin:2.5mm 0; font-size:8pt; }}
+  .report-author-name {{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:700; }}
+  .report-author-track {{ height:3.2mm; overflow:hidden; border-radius:99px; background:#e2e8f0; }}
+  .report-author-bar {{ height:100%; border-radius:99px; background:linear-gradient(90deg,var(--primary),var(--teal)); }}
+  .report-table {{ width:100%; border-collapse:collapse; font-size:7.5pt; }}
+  .report-table thead {{ display:table-header-group; }}
+  .report-table tr {{ break-inside:avoid; }}
+  .report-table th {{ padding:2.5mm 2mm; background:var(--dark); color:white; text-align:left; font-size:7pt; text-transform:uppercase; letter-spacing:.03em; }}
+  .report-table td {{ padding:2.5mm 2mm; border-bottom:1px solid #e2e8f0; vertical-align:top; }}
+  .report-table tr:nth-child(even) td {{ background:#f8fafc; }}
+  .report-ticket-key {{ color:var(--primary); font-weight:850; }}
+  .report-change {{ margin:0 0 4mm; padding:4mm 4.5mm; border:1px solid #dbe4ef; border-left:3px solid var(--change-color,var(--primary)); border-radius:3mm; background:#fff; break-inside:avoid; }}
+  .report-change-head {{ display:flex; justify-content:space-between; gap:5mm; margin-bottom:2mm; }}
+  .report-change-title {{ font-size:9pt; font-weight:850; color:var(--dark); }}
+  .report-change-meta {{ color:#64748b; font-size:7.5pt; white-space:nowrap; }}
+  .report-change-type {{ margin-bottom:2.5mm; color:#475569; font-size:8pt; }}
+  .report-before-after {{ display:grid; grid-template-columns:1fr 1fr; gap:3mm; }}
+  .report-value {{ min-height:13mm; padding:3mm; border-radius:2mm; font-size:7.2pt; line-height:1.4; white-space:pre-wrap; overflow-wrap:anywhere; }}
+  .report-value.before {{ background:#fff1f2; border:1px solid #fecdd3; }}
+  .report-value.after {{ background:#f0fdf4; border:1px solid #bbf7d0; }}
+  .report-value b {{ display:block; margin-bottom:1mm; font-size:6.8pt; letter-spacing:.04em; text-transform:uppercase; }}
+  .report-empty {{ padding:8mm; border:1px dashed #cbd5e1; border-radius:3mm; color:#64748b; text-align:center; }}
+  .report-footer {{ position:fixed; right:0; bottom:-9mm; left:0; display:flex; justify-content:space-between; padding-top:2mm; border-top:1px solid #cbd5e1; color:#64748b; font-size:7pt; }}
+}}
 </style>
 </head>
 <body>
-<header><h1>Jira changelog timeline</h1><p>Mode cookies navigateur · vision globale par période + diff précis des champs texte</p></header>
+<header>
+  <div class="header-inner">
+    <div><h1>Jira changelog timeline</h1><p>Mode cookies navigateur · vision globale par période + diff précis des champs texte</p></div>
+    <button type="button" class="export-button" id="exportButton" aria-haspopup="dialog">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>
+      <span>Exporter en PDF</span>
+    </button>
+  </div>
+</header>
+<dialog class="export-dialog" id="exportDialog">
+  <div class="export-dialog-head"><h2>Composer le rapport PDF</h2><p>Le rapport reprend la période, les filtres et les tickets actuellement sélectionnés dans le dashboard.</p></div>
+  <div class="export-dialog-body">
+    <div class="export-scope" id="exportScope"></div>
+    <div class="export-label">Titre du rapport</div>
+    <input class="export-title-input" id="reportTitle" value="Rapport d’activité Jira" maxlength="100"/>
+    <div class="export-label">Sections à inclure</div>
+    <div class="export-options">
+      <label class="export-option"><input type="checkbox" data-report-section="summary" checked/><span>Synthèse exécutive<small>Indicateurs clés et lecture rapide.</small></span></label>
+      <label class="export-option"><input type="checkbox" data-report-section="activity" checked/><span>Activité dans le temps<small>Graphique d’évolution des modifications.</small></span></label>
+      <label class="export-option"><input type="checkbox" data-report-section="fields" checked/><span>Répartition des actions<small>Champs modifiés et contributeurs.</small></span></label>
+      <label class="export-option"><input type="checkbox" data-report-section="tickets" checked/><span>Tableau des tickets<small>Volume et nature des actions par ticket.</small></span></label>
+      <label class="export-option"><input type="checkbox" data-report-section="details" checked/><span>Détail des modifications<small>Qui a fait quoi, quand, avant et après.</small></span></label>
+    </div>
+    <div class="export-row">
+      <div><div class="export-label">Nombre maximal de détails</div><select id="reportDetailLimit"><option value="25">25 modifications</option><option value="50" selected>50 modifications</option><option value="100">100 modifications</option><option value="all">Toutes les modifications</option></select></div>
+      <div><div class="export-label">Ordre du détail</div><select id="reportDetailOrder"><option value="newest">Plus récentes d’abord</option><option value="oldest">Plus anciennes d’abord</option><option value="ticket">Regrouper par ticket</option></select></div>
+    </div>
+    <p class="export-help">La fenêtre d’impression du navigateur s’ouvrira ensuite : choisissez <b>Enregistrer au format PDF</b> comme destination.</p>
+  </div>
+  <div class="export-actions"><button type="button" class="dialog-button secondary" id="cancelExport">Annuler</button><button type="button" class="dialog-button primary" id="generatePdf">Créer le PDF</button></div>
+</dialog>
 <div class="container">
   <div class="filters">
     <div><label>Date début</label><input type="date" id="dateStart"/></div>
@@ -1465,6 +1583,7 @@ del {{ background:#fee2e2; color:#991b1b; text-decoration:line-through; border-r
     <div class="panel"><h2>Timeline ticket par ticket</h2><div id="timeline"></div></div>
   </div>
 </div>
+<main class="print-report" id="pdfReport" aria-hidden="true"></main>
 <script>
 const DATA = {data_json};
 const issues = DATA.issues;
@@ -1526,6 +1645,9 @@ function init() {{
   document.getElementById('searchBox').oninput = e => {{ state.q=e.target.value.toLowerCase(); render(); }};
   document.getElementById('dateStart').onchange = e => {{ state.start=e.target.value; render(); }};
   document.getElementById('dateEnd').onchange = e => {{ state.end=e.target.value; render(); }};
+  document.getElementById('exportButton').onclick = openExportDialog;
+  document.getElementById('cancelExport').onclick = closeExportDialog;
+  document.getElementById('generatePdf').onclick = generatePdf;
   prefillDates();
   render();
 }}
@@ -1560,10 +1682,14 @@ function eventPass(e, issueSet) {{
   if(q && !(String(e.key+' '+e.summary+' '+e.author+' '+e.field+' '+e.from_excerpt+' '+e.to_excerpt+' '+e.from_value+' '+e.to_value).toLowerCase().includes(q))) return false;
   return true;
 }}
-function render() {{
+function getFilteredData() {{
   const filteredIssues = issues.filter(issuePass);
   const issueSet = new Set(filteredIssues.map(i=>i.issue_id));
   const filteredEvents = events.filter(e=>eventPass(e, issueSet));
+  return {{ filteredIssues, filteredEvents }};
+}}
+function render() {{
+  const {{filteredIssues, filteredEvents}} = getFilteredData();
   renderCards(filteredIssues, filteredEvents);
   renderGlobal(filteredIssues, filteredEvents);
   renderFields(filteredEvents);
@@ -1612,6 +1738,160 @@ function eventHtml(e) {{
   const precise = (e.field==='Description' || e.field==='Acceptance Criteria' || e.field==='Résumé' || e.field==='Commentaire') ? `<div class="precise-title">Diff précis</div><div class="precise">${{preciseDiff(e.from_value||'', e.to_value||'')}}</div>` : '';
   const beforeAfter = `<div class="diff"><div><b>Avant</b><br>${{escapeHtml(e.from_excerpt||e.from_value||'')}}</div><div><b>Après</b><br>${{escapeHtml(e.to_excerpt||e.to_value||'')}}</div></div>`;
   return `<div class="event ${{eventClass(e)}}"><div class="top"><div><span class="field">${{escapeHtml(e.field)}}</span> <span class="badge">${{escapeHtml(e.key)}}</span> <span class="badge">${{escapeHtml(e.author||'')}}</span></div><div class="date">${{formatDate(e.event_date)}}</div></div><div>${{escapeHtml(e.change_type)}} · <a href="${{e.url}}" target="_blank">ouvrir Jira</a></div>${{precise}}${{beforeAfter}}</div>`;
+}}
+function closeExportDialog() {{
+  const dialog=document.getElementById('exportDialog');
+  if(typeof dialog.close==='function') dialog.close(); else dialog.removeAttribute('open');
+}}
+function openExportDialog() {{
+  const {{filteredIssues,filteredEvents}}=getFilteredData();
+  const modifications=filteredEvents.filter(e=>e.event_source==='changelog').length;
+  document.getElementById('exportScope').innerHTML=`<span>Le PDF portera sur</span><strong>${{filteredIssues.length}} ticket(s)</strong><span>et</span><strong>${{modifications}} modification(s)</strong>`;
+  const dialog=document.getElementById('exportDialog');
+  if(typeof dialog.showModal==='function') dialog.showModal(); else dialog.setAttribute('open','');
+}}
+function selectedReportSections() {{
+  return new Set(Array.from(document.querySelectorAll('[data-report-section]:checked')).map(el=>el.dataset.reportSection));
+}}
+function countBy(items,keyFn) {{
+  const counts={{}};
+  items.forEach(item=>{{ const key=keyFn(item)||'Non renseigné'; counts[key]=(counts[key]||0)+1; }});
+  return counts;
+}}
+function sortedCounts(counts) {{ return Object.entries(counts).sort((a,b)=>b[1]-a[1] || String(a[0]).localeCompare(String(b[0]))); }}
+function truncateReportText(value,max=420) {{
+  const text=String(value||'').replace(/\s+/g,' ').trim();
+  return text.length>max ? text.slice(0,max-1)+'…' : text;
+}}
+function reportFilterChips() {{
+  const chips=[];
+  const add=(label,value)=>{{ if(value) chips.push(`<span class="report-chip">${{escapeHtml(label)}} : ${{escapeHtml(value)}}</span>`); }};
+  add('Période',`${{state.start||'début'}} → ${{state.end||'fin'}}`);
+  [['Type','type'],['Sprint','sprint'],['Statut','status'],['Champ','field'],['Ticket','ticket']].forEach(([label,key])=>{{ if(state[key].size) add(label,Array.from(state[key]).join(', ')); }});
+  if(state.q) add('Recherche',document.getElementById('searchBox').value);
+  if(chips.length===1) add('Périmètre','Tous les éléments du dashboard');
+  return chips.join('');
+}}
+function reportKpi(label,value,note,color) {{
+  return `<div class="report-kpi" style="--kpi-color:${{color}}"><div class="report-kpi-label">${{escapeHtml(label)}}</div><div class="report-kpi-value">${{value}}</div><div class="report-kpi-note">${{escapeHtml(note)}}</div></div>`;
+}}
+function executiveText(is,es) {{
+  const modifications=es.filter(e=>e.event_source==='changelog');
+  const fields=sortedCounts(countBy(modifications,e=>e.field));
+  const authors=sortedCounts(countBy(es,e=>e.author));
+  const ticketCounts=sortedCounts(countBy(es,e=>e.key));
+  if(!es.length) return 'Aucune action ne correspond aux filtres sélectionnés sur cette période.';
+  const parts=[`${{modifications.length}} modification(s) et ${{es.length-modifications.length}} action(s) sur les commentaires ont été relevées sur ${{is.length}} ticket(s).`];
+  if(fields.length) parts.push(`Le champ le plus travaillé est « ${{fields[0][0]}} » avec ${{fields[0][1]}} modification(s).`);
+  if(authors.length) parts.push(`${{authors[0][0]}} est le contributeur le plus actif (${{authors[0][1]}} action(s)).`);
+  if(ticketCounts.length) parts.push(`Le ticket ${{ticketCounts[0][0]}} concentre le plus d’activité (${{ticketCounts[0][1]}} action(s)).`);
+  return parts.join(' ');
+}}
+function activityChartHtml(es) {{
+  let entries=sortedCounts(countBy(es,e=>(e.event_date||'').slice(0,10))).sort((a,b)=>a[0].localeCompare(b[0]));
+  if(!entries.length) return '<div class="report-empty">Aucune activité sur la période sélectionnée.</div>';
+  if(entries.length>18) {{
+    const size=Math.ceil(entries.length/18), grouped=[];
+    for(let i=0;i<entries.length;i+=size) {{
+      const part=entries.slice(i,i+size), total=part.reduce((sum,row)=>sum+row[1],0);
+      grouped.push([part.length===1?part[0][0]:`${{part[0][0]}} → ${{part[part.length-1][0]}}`,total]);
+    }}
+    entries=grouped;
+  }}
+  const width=860,height=245,left=44,right=15,top=18,bottom=54,plotW=width-left-right,plotH=height-top-bottom;
+  const max=Math.max(...entries.map(row=>row[1]),1), step=plotW/entries.length, barW=Math.max(8,Math.min(34,step*.64));
+  let grid='',bars='';
+  for(let i=0;i<=4;i++) {{
+    const y=top+plotH-(plotH*i/4), value=Math.round(max*i/4);
+    grid+=`<line x1="${{left}}" x2="${{width-right}}" y1="${{y}}" y2="${{y}}" stroke="#dbe4ef" stroke-width="1"/><text x="${{left-8}}" y="${{y+4}}" text-anchor="end" font-size="10" fill="#64748b">${{value}}</text>`;
+  }}
+  entries.forEach(([label,value],idx)=>{{
+    const x=left+step*idx+(step-barW)/2,h=Math.max(2,value/max*plotH),y=top+plotH-h;
+    const shortLabel=label.length>10 ? label.slice(5,10)+'…' : label.slice(5).replace('-','/');
+    bars+=`<rect x="${{x}}" y="${{y}}" width="${{barW}}" height="${{h}}" rx="4" fill="url(#activityGradient)"><title>${{escapeHtml(label)}} : ${{value}} action(s)</title></rect><text x="${{x+barW/2}}" y="${{Math.max(top+10,y-5)}}" text-anchor="middle" font-size="10" font-weight="700" fill="#334155">${{value}}</text><text x="${{x+barW/2}}" y="${{height-29}}" text-anchor="end" transform="rotate(-38 ${{x+barW/2}} ${{height-29}})" font-size="9" fill="#64748b">${{escapeHtml(shortLabel)}}</text>`;
+  }});
+  return `<svg viewBox="0 0 ${{width}} ${{height}}" role="img" aria-label="Évolution des actions"><defs><linearGradient id="activityGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1F4E78"/><stop offset="1" stop-color="#0F766E"/></linearGradient></defs>${{grid}}${{bars}}</svg>`;
+}}
+function fieldDistributionHtml(es) {{
+  let rows=sortedCounts(countBy(es,e=>e.field));
+  if(!rows.length) return '<div class="report-empty">Aucune action à répartir.</div>';
+  if(rows.length>6) rows=[...rows.slice(0,6),['Autres',rows.slice(6).reduce((sum,row)=>sum+row[1],0)]];
+  const colors=['#1F4E78','#0F766E','#F59E0B','#7C3AED','#EF4444','#06B6D4','#94A3B8'];
+  const total=rows.reduce((sum,row)=>sum+row[1],0), circumference=2*Math.PI*58;
+  let offset=0,circles='',legend='';
+  rows.forEach(([label,value],idx)=>{{
+    const length=value/total*circumference,color=colors[idx%colors.length];
+    circles+=`<circle cx="85" cy="85" r="58" fill="none" stroke="${{color}}" stroke-width="27" stroke-dasharray="${{length}} ${{circumference-length}}" stroke-dashoffset="${{-offset}}" transform="rotate(-90 85 85)"/>`;
+    offset+=length;
+    legend+=`<div class="report-legend-row"><span class="report-legend-dot" style="background:${{color}}"></span><span>${{escapeHtml(label)}}</span><b>${{value}} · ${{Math.round(value/total*100)}} %</b></div>`;
+  }});
+  return `<svg viewBox="0 0 170 170" style="max-height:48mm"><circle cx="85" cy="85" r="58" fill="none" stroke="#e2e8f0" stroke-width="27"/>${{circles}}<text x="85" y="81" text-anchor="middle" font-size="25" font-weight="800" fill="#17365D">${{total}}</text><text x="85" y="100" text-anchor="middle" font-size="10" fill="#64748b">actions</text></svg><div class="report-legend">${{legend}}</div>`;
+}}
+function authorChartHtml(es) {{
+  const rows=sortedCounts(countBy(es,e=>e.author)).slice(0,10);
+  if(!rows.length) return '<div class="report-empty">Aucun contributeur identifié.</div>';
+  const max=rows[0][1];
+  return rows.map(([author,value])=>`<div class="report-author"><div class="report-author-name">${{escapeHtml(author)}}</div><div class="report-author-track"><div class="report-author-bar" style="width:${{Math.max(4,value/max*100)}}%"></div></div><b>${{value}}</b></div>`).join('');
+}}
+function ticketTableHtml(is,es) {{
+  const eventByIssue={{}};
+  es.forEach(e=>{{ if(!eventByIssue[e.issue_id]) eventByIssue[e.issue_id]=[]; eventByIssue[e.issue_id].push(e); }});
+  const sorted=[...is].sort((a,b)=>(eventByIssue[b.issue_id]||[]).length-(eventByIssue[a.issue_id]||[]).length || a.key.localeCompare(b.key));
+  if(!sorted.length) return '<div class="report-empty">Aucun ticket dans la sélection.</div>';
+  const rows=sorted.map(i=>{{
+    const ticketEvents=eventByIssue[i.issue_id]||[], fieldCount=field=>ticketEvents.filter(e=>e.field===field).length;
+    const mods=ticketEvents.filter(e=>e.event_source==='changelog').length, comments=ticketEvents.length-mods;
+    return `<tr><td><a class="report-ticket-key" href="${{escapeHtml(i.url)}}">${{escapeHtml(i.key)}}</a><br><span style="color:#64748b">${{escapeHtml(i.issue_type||'')}}</span></td><td>${{escapeHtml(truncateReportText(i.summary,105))}}</td><td>${{escapeHtml(i.status||'—')}}</td><td><b>${{mods}}</b></td><td>${{fieldCount('Description')}}</td><td>${{fieldCount('Acceptance Criteria')}}</td><td>${{fieldCount('Statut')}}</td><td>${{fieldCount('Assignation')}}</td><td>${{comments}}</td></tr>`;
+  }}).join('');
+  return `<table class="report-table"><thead><tr><th>Ticket</th><th>Résumé</th><th>Statut actuel</th><th>Modif.</th><th>Descr.</th><th>AC</th><th>Statut</th><th>Réassign.</th><th>Comm.</th></tr></thead><tbody>${{rows}}</tbody></table>`;
+}}
+function reportChangeColor(e) {{
+  return {{desc:'#10B981',ac:'#F59E0B',status:'#0F766E',assign:'#EF4444',comment:'#64748B'}}[eventClass(e)]||'#1F4E78';
+}}
+function changeDetailHtml(e) {{
+  const before=truncateReportText(e.from_value||e.from_excerpt||'',520),after=truncateReportText(e.to_value||e.to_excerpt||'',520);
+  return `<article class="report-change" style="--change-color:${{reportChangeColor(e)}}"><div class="report-change-head"><div class="report-change-title">${{escapeHtml(e.key)}} · ${{escapeHtml(e.field||'Action')}}</div><div class="report-change-meta">${{escapeHtml(formatDate(e.event_date))}}</div></div><div class="report-change-type">${{escapeHtml(e.change_type||'Modification')}} · par <b>${{escapeHtml(e.author||'Non renseigné')}}</b></div><div class="report-before-after"><div class="report-value before"><b>Avant</b>${{escapeHtml(before||'—')}}</div><div class="report-value after"><b>Après</b>${{escapeHtml(after||'—')}}</div></div></article>`;
+}}
+function detailsHtml(es) {{
+  const order=document.getElementById('reportDetailOrder').value;
+  let sorted=[...es];
+  if(order==='oldest') sorted.sort((a,b)=>String(a.event_date).localeCompare(String(b.event_date)));
+  else if(order==='ticket') sorted.sort((a,b)=>String(a.key).localeCompare(String(b.key)) || String(b.event_date).localeCompare(String(a.event_date)));
+  else sorted.sort((a,b)=>String(b.event_date).localeCompare(String(a.event_date)));
+  const rawLimit=document.getElementById('reportDetailLimit').value,limit=rawLimit==='all'?sorted.length:Number(rawLimit);
+  const visible=sorted.slice(0,limit),note=visible.length<sorted.length?`<p class="report-section-intro">${{visible.length}} actions affichées sur ${{sorted.length}}. Modifiez la limite dans les options d’export pour en inclure davantage.</p>`:'';
+  return visible.length ? note+visible.map(changeDetailHtml).join('') : '<div class="report-empty">Aucune modification à détailler.</div>';
+}}
+function reportPage(title,intro,content) {{
+  return `<div class="report-page"><section class="report-section"><h2>${{escapeHtml(title)}}</h2>${{intro?`<p class="report-section-intro">${{escapeHtml(intro)}}</p>`:''}}${{content}}</section></div>`;
+}}
+function buildPdfReport(is,es,sections) {{
+  const title=document.getElementById('reportTitle').value.trim()||'Rapport d’activité Jira';
+  const modifications=es.filter(e=>e.event_source==='changelog'),comments=es.length-modifications.length;
+  const authors=new Set(es.map(e=>e.author).filter(Boolean)),fields=new Set(modifications.map(e=>e.field).filter(Boolean));
+  const generatedAt=new Date(),generatedLabel=generatedAt.toLocaleString('fr-FR');
+  let html=`<section class="report-cover"><div class="report-brand"><span>Jira · Rapport d’activité</span><span>Document de synthèse</span></div><div class="report-cover-main"><div class="report-kicker">Sélection du dashboard</div><h1>${{escapeHtml(title)}}</h1><p class="report-cover-subtitle">Une lecture claire des actions réalisées, de leur volume et des tickets concernés.</p><div class="report-cover-meta"><div class="report-cover-stat"><b>${{is.length}}</b><span>tickets analysés</span></div><div class="report-cover-stat"><b>${{modifications.length}}</b><span>modifications</span></div><div class="report-cover-stat"><b>${{authors.size}}</b><span>contributeurs</span></div></div></div><div class="report-cover-foot"><span>Période : ${{escapeHtml(state.start||'début')}} → ${{escapeHtml(state.end||'fin')}}</span><span>Généré le ${{escapeHtml(generatedLabel)}}</span></div></section>`;
+  if(sections.has('summary')) {{
+    const kpis=reportKpi('Tickets',is.length,'dans la sélection','#93c5fd')+reportKpi('Modifications',modifications.length,'hors commentaires','#86efac')+reportKpi('Actions totales',es.length,'modifications + commentaires','#67e8f9')+reportKpi('Champs modifiés',fields.size,'types de champs distincts','#fcd34d')+reportKpi('Contributeurs',authors.size,'auteurs identifiés','#c4b5fd')+reportKpi('Commentaires',comments,'créations ou éditions','#fda4af');
+    html+=reportPage('Synthèse exécutive','Périmètre exact repris depuis les filtres du dashboard.',`<div class="report-filters">${{reportFilterChips()}}</div><div class="report-kpis">${{kpis}}</div><div class="report-highlight"><b>À retenir.</b> ${{escapeHtml(executiveText(is,es))}}</div>`);
+  }}
+  if(sections.has('activity')) html+=reportPage('Activité dans le temps','Nombre d’actions Jira relevées pour chaque date de la période sélectionnée.',`<div class="report-chart-card"><h3>Évolution des actions</h3>${{activityChartHtml(es)}}</div>`);
+  if(sections.has('fields')) html+=reportPage('Nature des actions et contributeurs','Répartition des actions retenues par champ Jira et par auteur.',`<div class="report-two-cols"><div class="report-chart-card"><h3>Champs concernés</h3>${{fieldDistributionHtml(es)}}</div><div class="report-chart-card"><h3>Contributeurs les plus actifs</h3>${{authorChartHtml(es)}}</div></div>`);
+  if(sections.has('tickets')) html+=reportPage('Tickets concernés','Le volume détaille les modifications, descriptions, critères d’acceptation, transitions, réassignations et commentaires.',ticketTableHtml(is,es));
+  if(sections.has('details')) html+=reportPage('Ce qui a été fait','Détail chronologique des actions avec auteur et comparaison avant / après.',detailsHtml(es));
+  html+=`<div class="report-footer"><span>${{escapeHtml(title)}} · Sélection du dashboard Jira</span><span>Généré le ${{escapeHtml(generatedLabel)}}</span></div>`;
+  return {{html,title}};
+}}
+function generatePdf() {{
+  const sections=selectedReportSections();
+  if(!sections.size) {{ window.alert('Sélectionnez au moins une section à inclure dans le rapport.'); return; }}
+  const {{filteredIssues,filteredEvents}}=getFilteredData(),report=buildPdfReport(filteredIssues,filteredEvents,sections);
+  const target=document.getElementById('pdfReport'),previousTitle=document.title;
+  target.innerHTML=report.html; target.setAttribute('aria-hidden','false'); closeExportDialog();
+  document.title=(report.title+'_'+(state.start||'debut')+'_'+(state.end||'fin')).replace(/[^a-zA-Z0-9À-ÿ_-]+/g,'-');
+  const cleanup=()=>{{ target.innerHTML=''; target.setAttribute('aria-hidden','true'); document.title=previousTitle; window.removeEventListener('afterprint',cleanup); }};
+  window.addEventListener('afterprint',cleanup);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>window.print()));
 }}
 function preciseDiff(a,b) {{
   a=String(a||''); b=String(b||'');
